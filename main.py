@@ -3392,7 +3392,10 @@ def log_security_action(user_id, action, details=""):
     except Exception as e:
         print(f"❌ Erreur log sécurité: {e}")
 
-if __name__ == '__main__':
+def initialize_app():
+    """Initialiser l'application au démarrage (fonctionne avec Gunicorn)"""
+    print("🚀 Initialisation de l'application...")
+    
     # Initialize database with retry logic
     max_init_retries = 3
     for init_attempt in range(max_init_retries):
@@ -3408,7 +3411,6 @@ if __name__ == '__main__':
         except sqlite3.OperationalError as e:
             if "database is locked" in str(e) and init_attempt < max_init_retries - 1:
                 print(f"⚠️ Base de données verrouillée, tentative {init_attempt + 1}/{max_init_retries}")
-                import time
                 time.sleep(2)
                 continue
             else:
@@ -3451,8 +3453,15 @@ if __name__ == '__main__':
 
     # Shutdown scheduler when exiting the app
     atexit.register(lambda: scheduler.shutdown())
+    
+    print("✅ Application initialisée et prête")
 
-    # Configuration pour la production
+# Initialiser l'application au chargement du module (fonctionne avec Gunicorn)
+initialize_app()
+
+if __name__ == '__main__':
+    # L'initialisation est déjà faite par initialize_app() au chargement du module
+    # On lance juste le serveur Flask en mode développement
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV') != 'production'
     app.run(host='0.0.0.0', port=port, debug=debug)
